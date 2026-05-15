@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | Consistency Tracker</title>
+
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(135deg, #6a11cb, #b7bfcc);
+      overflow: hidden;
+      color: #fff;
+    }
+
+    /* ----- BRAND HEADER ------ */
+    .brand-header {
+      position: absolute;
+      top: 25px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .main-title {
+      font-size: 42px;
+      font-weight: 900;
+      margin: 0;
+      background: linear-gradient(135deg, #ffeeb9, #ff8ad6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    }
+
+    .logo-icon {
+      width: 42px;
+      height: 42px;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
+    .slogan {
+      margin-top: 12px;
+      font-size: 17px;
+      color: rgba(255, 255, 255, 0.92);
+    }
+
+    /* ----- LOGIN CARD ------ */
+    .login-card {
+      width: 360px;
+      padding: 32px;
+      margin-top: 130px;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(18px);
+      border-radius: 22px;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3);
+    }
+
+    .login-card h2 {
+      margin-bottom: 6px;
+      font-size: 24px;
+    }
+
+    .sub {
+      margin-top: 0;
+      margin-bottom: 18px;
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 7px 0;
+      border: none;
+      border-radius: 999px;
+      font-size: 15px;
+      outline: none;
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .primary { background: #fff; color: #222; }
+    .secondary { background: #000; color: #fff; border: 1px solid #fff; }
+
+    .link-text {
+      margin-top: 14px;
+      font-size: 13px;
+      opacity: 0.95;
+    }
+
+    /* ----- BACKGROUND SHAPES (NO ANIMATION) ----- */
+    .bg-shape {
+      position: absolute;
+      width: 420px;
+      height: 420px;
+      filter: blur(120px);
+      border-radius: 50%;
+      opacity: 0.45;
+      z-index: 0;
+    }
+
+    .bg-shape.one { background: #ff99cc; top: -120px; left: -160px; }
+    .bg-shape.two { background: #7a70ff; bottom: -150px; right: -160px; }
+  </style>
+</head>
+
+<body>
+
+  <div class="brand-header">
+    <h1 class="main-title">
+      <img class="logo-icon" src="https://cdn-icons-png.flaticon.com/512/4825/4825465.png">
+      Consistency Tracker
+    </h1>
+    <p class="slogan">Build Habits. Stay Consistent.</p>
+  </div>
+
+  <div class="login-card">
+    <h2>Welcome</h2>
+    <p class="sub">Login to continue</p>
+
+    <input id="auth-email" type="email" placeholder="Email">
+    <input id="auth-pass" type="password" placeholder="Password">
+
+    <button id="btn-signin" class="login-btn primary">Sign In</button>
+    <button id="btn-signup" class="login-btn secondary">Create Account</button>
+
+    <p class="link-text">
+      <a id="forgotLink" style="cursor:pointer;color:white;">Forgot password?</a>
+    </p>
+  </div>
+
+  <!-- Background shapes -->
+  <div class="bg-shape one"></div>
+  <div class="bg-shape two"></div>
+
+  <!-- Supabase Auth -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase_config.js"></script>
+
+  <script>
+    const sb = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+    const emailInput = document.getElementById("auth-email");
+    const passInput = document.getElementById("auth-pass");
+    const btnSignin = document.getElementById("btn-signin");
+    const btnSignup = document.getElementById("btn-signup");
+
+    btnSignin.onclick = async () => {
+      const { error } = await sb.auth.signInWithPassword({
+        email: emailInput.value,
+        password: passInput.value,
+      });
+      if (error) alert(error.message);
+      else window.location.href = "index.html";
+    };
+
+    btnSignup.onclick = async () => {
+      const { error } = await sb.auth.signUp({
+        email: emailInput.value,
+        password: passInput.value,
+      });
+      if (error) alert(error.message);
+      else alert("Account created! Please sign in.");
+    };
+  </script>
+
+</body>
+</html>

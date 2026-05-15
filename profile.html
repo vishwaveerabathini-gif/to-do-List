@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile | Consistency Tracker</title>
+
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #6a11cb, #2575fc);
+      font-family: "Poppins", sans-serif;
+      overflow: hidden;
+      color: #fff;
+    }
+
+    .brand-header {
+      position: absolute;
+      top: 25px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .main-title {
+      margin: 0;
+      font-size: 42px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #ffeeb9, #ff8ad6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .logo-icon {
+      width: 42px;
+      height: 42px;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    .slogan {
+      margin-top: 12px;
+      font-size: 17px;
+    }
+
+    .profile-card {
+      width: 360px;
+      padding: 35px;
+      text-align: center;
+      margin-top: 125px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 22px;
+      box-shadow: 0 12px 35px rgba(0,0,0,.3);
+      backdrop-filter: blur(14px);
+    }
+
+    .avatar {
+      width: 90px;
+      height: 90px;
+      margin: 0 auto 20px;
+      background: #fff;
+      border-radius: 50%;
+      font-size: 38px;
+      color: #2575fc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+
+    .logout {
+      width: 100%;
+      padding: 12px;
+      background: #ff4747;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      color: #fff;
+      font-size: 16px;
+      margin-top: 20px;
+    }
+
+    .back {
+      margin-top: 15px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 14px;
+      display: inline-block;
+      text-decoration: underline;
+    }
+
+    .bg-shape {
+      position: absolute;
+      width: 420px;
+      height: 420px;
+      filter: blur(120px);
+      border-radius: 50%;
+      opacity: 0.45;
+    }
+
+    .bg-shape.one { background: #ff99cc; top: -120px; left: -160px; }
+    .bg-shape.two { background: #5f85ff; bottom: -150px; right: -160px; }
+  </style>
+</head>
+
+<body>
+
+  <div class="brand-header">
+    <h1 class="main-title">
+      <img class="logo-icon" src="https://cdn-icons-png.flaticon.com/512/4825/4825465.png">
+      Consistency Tracker
+    </h1>
+    <p class="slogan">Build Habits. Stay Consistent.</p>
+  </div>
+
+  <div class="profile-card">
+    <div id="avatar" class="avatar">?</div>
+    <h2>My Profile</h2>
+    <p id="userEmail"></p>
+
+    <button id="btn-logout" class="logout">Log Out</button>
+    <a href="index.html" class="back">← Back to Dashboard</a>
+  </div>
+
+  <div class="bg-shape one"></div>
+  <div class="bg-shape two"></div>
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase_config.js"></script>
+
+  <script>
+    const sb = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+
+    const emailSpan = document.getElementById("userEmail");
+    const avatar = document.getElementById("avatar");
+
+    sb.auth.getSession().then(({ data }) => {
+      if (!data?.session) {
+        window.location.href = "login.html";
+      } else {
+        const email = data.session.user.email;
+        emailSpan.textContent = email;
+        avatar.textContent = email.charAt(0).toUpperCase();
+      }
+    });
+
+    document.getElementById("btn-logout").onclick = async () => {
+      await sb.auth.signOut();
+      window.location.href = "login.html";
+    };
+  </script>
+
+</body>
+</html>
