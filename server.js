@@ -189,15 +189,20 @@ app.post("/signup", async (req, res) => {
                 10
             );
 
-        const user =
-            await User.create({
+        const username =
+    email
+        .split("@")[0]
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "") +
+    "_" +
+    Date.now();
 
-                email,
-
-                password:
-                    hashedPassword
-
-            });
+const user =
+    await User.create({
+        username,
+        email,
+        password: hashedPassword
+    });
 
         res.status(201).json({
 
