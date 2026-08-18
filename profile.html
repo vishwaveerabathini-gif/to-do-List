@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Profile | Consistency Tracker</title>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+
+            font-family: "Poppins", sans-serif;
+
+            color: white;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #6a11cb,
+                    #b7bfcc
+                );
+
+            padding: 30px;
+        }
+
+
+        .container {
+            width: min(900px, 100%);
+            margin: 0 auto;
+        }
+
+
+        /* =========================
+           TOP BAR
+        ========================= */
+
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            margin-bottom: 25px;
+        }
+
+
+        .back-btn {
+            border: 1px solid rgba(255,255,255,.4);
+
+            background:
+                rgba(255,255,255,.12);
+
+            color: white;
+
+            padding: 10px 18px;
+
+            border-radius: 999px;
+
+            cursor: pointer;
+
+            font-family: inherit;
+            font-weight: 600;
+
+            transition: .2s;
+        }
+
+
+        .back-btn:hover {
+            background:
+                rgba(255,255,255,.22);
+
+            transform:
+                translateY(-2px);
+        }
+
+
+        .logout-btn {
+            border: none;
+
+            background:
+                rgba(255,59,48,.9);
+
+            color: white;
+
+            padding: 10px 18px;
+
+            border-radius: 999px;
+
+            cursor: pointer;
+
+            font-family: inherit;
+            font-weight: 600;
+
+            transition: .2s;
+        }
+
+
+        .logout-btn:hover {
+            background: #ff3b30;
+
+            transform:
+                translateY(-2px);
+        }
+
+
+        /* =========================
+           PROFILE CARD
+        ========================= */
+
+        .profile-card {
+
+            background:
+                rgba(255,255,255,.15);
+
+            backdrop-filter:
+                blur(18px);
+
+            border:
+                1px solid
+                rgba(255,255,255,.18);
+
+            border-radius: 25px;
+
+            padding: 40px;
+
+            box-shadow:
+                0 20px 50px
+                rgba(0,0,0,.25);
+
+            text-align: center;
+        }
+
+
+        .avatar {
+
+            width: 110px;
+            height: 110px;
+
+            margin:
+                0 auto 20px;
+
+            border-radius: 50%;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #ffeeb9,
+                    #ff8ad6
+                );
+
+            color: #5b159d;
+
+            font-size: 42px;
+
+            font-weight: 800;
+
+            box-shadow:
+                0 10px 30px
+                rgba(0,0,0,.25);
+        }
+
+
+        .profile-card h1 {
+
+            margin:
+                0 0 8px;
+
+            font-size: 30px;
+        }
+
+
+        .email {
+
+            margin: 0;
+
+            color:
+                rgba(255,255,255,.8);
+
+            font-size: 15px;
+        }
+
+
+        /* =========================
+           INFO
+        ========================= */
+
+        .info-grid {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(2, 1fr);
+
+            gap: 18px;
+
+            margin-top: 35px;
+
+            text-align: left;
+        }
+
+
+        .info-box {
+
+            padding: 20px;
+
+            border-radius: 17px;
+
+            background:
+                rgba(255,255,255,.10);
+
+            border:
+                1px solid
+                rgba(255,255,255,.12);
+        }
+
+
+        .info-label {
+
+            font-size: 12px;
+
+            text-transform: uppercase;
+
+            letter-spacing: 1px;
+
+            opacity: .65;
+
+            margin-bottom: 7px;
+        }
+
+
+        .info-value {
+
+            font-size: 17px;
+
+            font-weight: 600;
+
+            word-break: break-word;
+        }
+
+
+        /* =========================
+           MESSAGE
+        ========================= */
+
+        #message {
+
+            display: none;
+
+            margin-top: 20px;
+
+            padding: 12px 16px;
+
+            border-radius: 12px;
+
+            font-size: 14px;
+
+            font-weight: 600;
+        }
+
+
+        #message.show {
+            display: block;
+        }
+
+
+        #message.success {
+
+            background:
+                rgba(22,199,132,.18);
+
+            border:
+                1px solid
+                rgba(22,199,132,.5);
+
+            color:
+                #d8ffed;
+        }
+
+
+        #message.error {
+
+            background:
+                rgba(255,59,48,.18);
+
+            border:
+                1px solid
+                rgba(255,59,48,.5);
+
+            color:
+                #ffe0dd;
+        }
+
+
+        /* =========================
+           MOBILE
+        ========================= */
+
+        @media(max-width:600px) {
+
+            body {
+                padding: 18px;
+            }
+
+
+            .profile-card {
+                padding: 28px 20px;
+            }
+
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+
+            .top-bar {
+                gap: 10px;
+            }
+
+
+            .back-btn,
+            .logout-btn {
+                padding:
+                    9px 13px;
+
+                font-size: 12px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+    <!-- =========================
+         TOP BAR
+    ========================= -->
+
+    <div class="top-bar">
+
+        <button
+            id="backBtn"
+            class="back-btn"
+        >
+            ← Back
+        </button>
+
+
+        <button
+            id="logoutBtn"
+            class="logout-btn"
+        >
+            Logout
+        </button>
+
+    </div>
+
+
+
+    <!-- =========================
+         PROFILE
+    ========================= -->
+
+    <div class="profile-card">
+
+
+        <div
+            id="avatar"
+            class="avatar"
+        >
+            U
+        </div>
+
+
+        <h1 id="profileName">
+            User
+        </h1>
+
+
+        <p
+            id="profileEmail"
+            class="email"
+        >
+            Loading...
+        </p>
+
+
+
+        <div
+            id="message"
+        ></div>
+
+
+
+        <!-- INFO -->
+
+        <div class="info-grid">
+
+
+            <div class="info-box">
+
+                <div class="info-label">
+                    Email
+                </div>
+
+                <div
+                    id="emailValue"
+                    class="info-value"
+                >
+                    —
+                </div>
+
+            </div>
+
+
+
+            <div class="info-box">
+
+                <div class="info-label">
+                    User ID
+                </div>
+
+                <div
+                    id="userIdValue"
+                    class="info-value"
+                >
+                    —
+                </div>
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+</div>
+
+
+
+<script>
+
+    // ==================================================
+    // GET LOGGED-IN USER
+    // ==================================================
+
+    let currentUser = null;
+
+
+    try {
+
+        const storedUser =
+            localStorage.getItem(
+                "currentUser"
+            );
+
+
+        if (storedUser) {
+
+            currentUser =
+                JSON.parse(
+                    storedUser
+                );
+
+        }
+
+    } catch (error) {
+
+        console.error(
+            "User data error:",
+            error
+        );
+
+        currentUser = null;
+
+    }
+
+
+
+    // ==================================================
+    // PROTECT PROFILE PAGE
+    // ==================================================
+
+    if (
+        !currentUser ||
+        !currentUser.id
+    ) {
+
+        window.location.replace(
+            "login.html"
+        );
+
+    }
+
+
+
+    // ==================================================
+    // DISPLAY PROFILE
+    // ==================================================
+
+    if (currentUser) {
+
+        const email =
+            currentUser.email ||
+            "User";
+
+
+        const profileName =
+            document.getElementById(
+                "profileName"
+            );
+
+
+        const profileEmail =
+            document.getElementById(
+                "profileEmail"
+            );
+
+
+        const emailValue =
+            document.getElementById(
+                "emailValue"
+            );
+
+
+        const userIdValue =
+            document.getElementById(
+                "userIdValue"
+            );
+
+
+        const avatar =
+            document.getElementById(
+                "avatar"
+            );
+
+
+        profileName.textContent =
+            email
+                .split("@")[0];
+
+
+        profileEmail.textContent =
+            email;
+
+
+        emailValue.textContent =
+            email;
+
+
+        userIdValue.textContent =
+            currentUser.id;
+
+
+        avatar.textContent =
+            email
+                .charAt(0)
+                .toUpperCase();
+
+    }
+
+
+
+    // ==================================================
+    // BACK BUTTON
+    // ==================================================
+
+    document
+        .getElementById("backBtn")
+        .addEventListener(
+            "click",
+            function () {
+
+                /*
+                 * Always return to dashboard.
+                 * Do NOT use browser history here,
+                 * because history may contain login.html.
+                 */
+
+                window.location.replace(
+                    "index.html"
+                );
+
+            }
+        );
+
+
+
+    // ==================================================
+    // LOGOUT
+    // ==================================================
+
+    document
+        .getElementById("logoutBtn")
+        .addEventListener(
+            "click",
+            function () {
+
+                // Remove MongoDB login session
+                localStorage.removeItem(
+                    "currentUser"
+                );
+
+
+                // Go to login
+                window.location.replace(
+                    "login.html"
+                );
+
+            }
+        );
+
+</script>
+
+
+</body>
+
+</html>

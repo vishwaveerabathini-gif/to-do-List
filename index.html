@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Consistency Tracker — Animated</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+
+  <meta name="description"
+    content="Track tiny daily habits — 30-day dashboard with persistent state and optimistic sync." />
+</head>
+
+<body>
+  <header class="site-header" role="banner">
+    <div class="wrap">
+     <div class="brand">
+        <h1>Consistency Tracker</h1>
+       <p class="subtitle">Tiny daily habits → big wins</p>
+      </div>
+
+      <!-- Only App Controls -->
+      <div class="controls" role="group" aria-label="App controls" style="display:flex; gap:12px;">
+        <button id="resetLocal" class="ghost" title="Clear local cache">Reset Local</button>
+        <button id="refreshBtn" class="ghost" title="Fetch latest from server">Refresh</button>
+        <button id="settingsBtn" class="ghost" title="Open settings">Settings</button>
+
+        <a href="profile.html" class="ghost">Profile</a>
+      </div>
+    </div>
+  </header>
+
+
+  <main class="wrap main-grid" role="main">
+    <!-- Left Panel -->
+    <section class="panel left-panel" aria-labelledby="todayHeading">
+      <div class="panel-head">
+        <h2 id="todayHeading">Today's Tasks</h2>
+        <div class="today-meta">
+          <div id="todayLabel" class="today-label"></div>
+          <div id="todayProgress" class="small-progress">Progress: <span id="todayPct">0%</span></div>
+        </div>
+      </div>
+
+      <div class="add-row">
+        <input id="taskInput" placeholder="Add a new task for today..." autocomplete="off" />
+        <button id="addTaskBtn">Add</button>
+      </div>
+
+      <ul id="taskList" class="task-list"></ul>
+
+      <div class="progress-row" style="margin-top:12px;">
+        <div class="progress-text">Day completion</div>
+        <div class="progress-bar">
+          <div id="mainProgressFill" class="progress-fill">
+            <span id="mainProgressText" class="progress-label">0%</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Panel -->
+    <section class="panel right-panel" aria-labelledby="dashboardHeading">
+      <div class="panel-head">
+        <h2 id="dashboardHeading">30-day Dashboard</h2>
+        <p class="muted">Green = ≥80% • Red = partial • Gray = none</p>
+        <p id="dashboardStreak" class="streak">Current streak: 0 days</p>
+      </div>
+      <div id="dayGrid" class="day-grid" role="grid"></div>
+      <div class="legend">
+        <span><span class="dot completed"></span> Completed</span>
+        <span><span class="dot partial"></span> Partial</span>
+        <span><span class="dot pending"></span> Pending</span>
+      </div>
+    </section>
+  </main>
+
+  <!-- Drawer -->
+  <aside id="drawer" class="drawer" aria-hidden="true">
+    <div class="drawer-head">
+      <h3 id="drawerDate">Day</h3>
+      <div class="drawer-actions">
+        <button id="closeDrawer" class="ghost">Close</button>
+      </div>
+    </div>
+    <div class="drawer-body">
+      <div class="add-row small">
+        <input id="drawerTaskInput" placeholder="Add a task for this day..." />
+        <button id="drawerAddTaskBtn">Add</button>
+      </div>
+      <ul id="drawerTaskList" class="task-list"></ul>
+      <div class="drawer-footer">
+        <div class="progress-row">
+          <div class="progress-text">Completion: <strong id="drawerPct">0%</strong></div>
+          <div class="progress-bar small">
+            <div id="drawerFill" class="progress-fill"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <h4>Settings</h4>
+      <label>
+        Completion threshold (%):
+        <input id="thresholdInput" type="number" min="50" max="100" value="80" />
+      </label>
+      <label style="margin-top:10px;">
+        Theme:
+        <select id="themeSelect">
+          <option value="default">Default</option>
+          <option value="dark">Dark</option>
+          <option value="pastel">Pastel</option>
+        </select>
+      </label>
+      <div style="margin-top:12px;">
+        <button id="saveSettings" class="ghost">Save</button>
+        <button id="closeSettings" class="ghost">Close</button>
+      </div>
+    </div>
+  </div>
+  
+
+  <div id="celebrate" class="celebrate"></div>
+  <div id="flower-container"></div>
+  <canvas id="confetti-canvas"></canvas>
+  <canvas id="fireworks-canvas"></canvas>
+  <audio id="good-sound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
+  <div id="good-quote-box"></div>
+  <div id="bad-quote-box"></div>
+
+  <!-- Supabase SDK + config + app script -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="supabase_config.js"></script>
+  <script type="module" src="script.js" defer></script>
+</body>
+
+</html>
