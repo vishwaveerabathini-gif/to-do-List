@@ -153,90 +153,140 @@ async function selectGroqModel() {
 // SIGNUP
 // ======================================================
 
+// app.post("/signup", async (req, res) => {
+
+//     try {
+
+//         const {
+//             email,
+//             password
+//         } = req.body;
+
+//         if (!email || !password) {
+
+//             return res.status(400).json({
+//                 error:
+//                     "Email and password are required"
+//             });
+//         }
+
+//         const existingUser =
+//             await User.findOne({
+//                 email
+//             });
+
+//         if (existingUser) {
+
+//             return res.status(400).json({
+//                 error:
+//                     "User already exists"
+//             });
+//         }
+
+//         const hashedPassword =
+//             await bcrypt.hash(
+//                 password,
+//                 10
+//             );
+
+//         const username =
+//     email
+//         .split("@")[0]
+//         .toLowerCase()
+//         .replace(/[^a-z0-9]/g, "") +
+//     "_" +
+//     Date.now();
+
+// const user =
+//     await User.create({
+//         username,
+//         email,
+//         password: hashedPassword
+//     });
+
+//         res.status(201).json({
+
+//             message:
+//                 "Account created successfully",
+
+//             user: {
+
+//                 id:
+//                     user._id,
+
+//                 email:
+//                     user.email
+
+//             }
+
+//         });
+
+//     } catch (err) {
+
+//         console.error(
+//             "Signup Error:",
+//             err
+//         );
+
+//         res.status(500).json({
+
+//             error:
+//                 "Server error during signup"
+
+//         });
+//     }
+// });
 app.post("/signup", async (req, res) => {
-
     try {
-
-        const {
-            email,
-            password
-        } = req.body;
+        const { email, password } = req.body;
 
         if (!email || !password) {
-
             return res.status(400).json({
-                error:
-                    "Email and password are required"
+                error: "Email and password are required."
             });
         }
 
-        const existingUser =
-            await User.findOne({
-                email
-            });
+        const existingUser = await User.findOne({ email });
 
         if (existingUser) {
-
-            return res.status(400).json({
-                error:
-                    "User already exists"
+            return res.status(409).json({
+                error: "User already exists."
             });
         }
 
-        const hashedPassword =
-            await bcrypt.hash(
-                password,
-                10
-            );
+        const hashedPassword = await bcrypt.hash(password, 10);
 
         const username =
-    email
-        .split("@")[0]
-        .toLowerCase()
-        .replace(/[^a-z0-9]/g, "") +
-    "_" +
-    Date.now();
+            email
+                .split("@")[0]
+                .toLowerCase()
+                .replace(/[^a-z0-9]/g, "") +
+            "_" +
+            Date.now();
 
-const user =
-    await User.create({
-        username,
-        email,
-        password: hashedPassword
-    });
-
-        res.status(201).json({
-
-            message:
-                "Account created successfully",
-
-            user: {
-
-                id:
-                    user._id,
-
-                email:
-                    user.email
-
-            }
-
+        const user = await User.create({
+            username,
+            email,
+            password: hashedPassword
         });
 
-    } catch (err) {
+        res.status(201).json({
+            message: "Account created successfully.",
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email
+            }
+        });
 
-        console.error(
-            "Signup Error:",
-            err
-        );
+    } catch (error) {
+        console.error("Signup Error:", error);
 
         res.status(500).json({
-
-            error:
-                "Server error during signup"
-
+            error: "Server error during signup."
         });
     }
 });
-
 // ======================================================
 // LOGIN
 // ======================================================
