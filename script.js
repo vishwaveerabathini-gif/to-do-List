@@ -88,7 +88,7 @@ async function fetchTasksFromServer() {
     try {
 
         const response = await fetch(
-            `http://localhost:4000/tasks/${currentUser.id}`
+            `/tasks/${currentUser.id}`
         );
 
         if (!response.ok) {
@@ -134,7 +134,7 @@ async function createTaskOnServer(title, date) {
     try {
 
         const response = await fetch(
-            "http://localhost:4000/tasks",
+            "/tasks",
             {
                 method: "POST",
 
@@ -267,7 +267,7 @@ async function updateTaskOnServer(id, patch) {
     try {
 
         const response = await fetch(
-            `http://localhost:4000/tasks/${id}`,
+            `/tasks/${id}`,
             {
                 method: "PATCH",
 
@@ -328,7 +328,7 @@ async function deleteTaskOnServer(id) {
     try {
 
         const response = await fetch(
-            `http://localhost:4000/tasks/${id}`,
+            `/tasks/${id}`,
             {
                 method: "DELETE"
             }
@@ -1711,7 +1711,7 @@ async function classifyTaskWithGroq(task) {
 
         const response =
             await fetch(
-                "http://localhost:4000/classify",
+                "/classify",
                 {
 
                     method:
@@ -1943,8 +1943,6 @@ function showTaskAIResult(aiData) {
 
     }
 }
-
-
 // ======================================================
 // ==================== ADD TASK ========================
 // ======================================================
