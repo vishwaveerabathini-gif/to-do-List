@@ -1,3 +1,5 @@
+import path from "path";
+import { fileURLToPath } from "url";
 import mongoose from "mongoose";
 import "dotenv/config";
 import express from "express";
@@ -9,10 +11,34 @@ import Task from "./Task.js";
 import bcrypt from "bcryptjs";
 
 const app = express();
-
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 app.use(cors());
 app.use(bodyParser.json());
 
+// ======================================================
+// FRONTEND
+// ======================================================
+
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "index.html"));
+});
+
+app.get("/login.html", (req, res) => {
+    res.sendFile(path.join(__dirname, "login.html"));
+});
+
+app.get("/profile.html", (req, res) => {
+    res.sendFile(path.join(__dirname, "profile.html"));
+});
+
+app.get("/script.js", (req, res) => {
+    res.sendFile(path.join(__dirname, "script.js"));
+});
+
+app.get("/style.css", (req, res) => {
+    res.sendFile(path.join(__dirname, "style.css"));
+});
 // ======================================================
 // MONGODB CONNECTION
 // ======================================================
