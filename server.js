@@ -24,7 +24,7 @@ app.use(cors());
 
 app.use(bodyParser.json());
 
-
+app.use(express.static(process.cwd()));
 // ======================================================
 // ENVIRONMENT VARIABLES
 // ======================================================
