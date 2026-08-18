@@ -4,7 +4,7 @@ import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
 import Groq from "groq-sdk";
-import User from "./User.js";
+import User from "./user.js";
 import Task from "./Task.js";
 import bcrypt from "bcryptjs";
 
