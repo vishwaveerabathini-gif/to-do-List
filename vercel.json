@@ -6,14 +6,9 @@
       "use": "@vercel/node",
       "config": {
         "includeFiles": [
-          "index.html",
-          "login.html",
-          "profile.html",
-          "style.css",
-          "script.js",
-          "supabase_config.js",
-          "Task.js",
-          "user.js"
+          "**/*.html",
+          "**/*.css",
+          "**/*.js"
         ]
       }
     }
