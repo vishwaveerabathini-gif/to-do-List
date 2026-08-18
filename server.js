@@ -13,7 +13,6 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-
 // ======================================================
 // MONGODB CONNECTION
 // ======================================================
@@ -28,7 +27,6 @@ mongoose.connect(process.env.MONGODB_URI)
             err
         );
     });
-
 
 // ======================================================
 // GROQ AI
@@ -51,7 +49,6 @@ console.log(
     "Groq API key length:",
     process.env.GROQ_API_KEY?.length || 0
 );
-
 
 // ======================================================
 // FIND AVAILABLE GROQ MODEL
@@ -121,7 +118,6 @@ async function selectGroqModel() {
         );
     }
 }
-
 
 // ======================================================
 // SIGNUP
@@ -205,7 +201,6 @@ app.post("/signup", async (req, res) => {
         });
     }
 });
-
 
 // ======================================================
 // LOGIN
@@ -294,7 +289,6 @@ app.post("/login", async (req, res) => {
     }
 });
 
-
 // ======================================================
 // CREATE TASK
 // ======================================================
@@ -373,7 +367,6 @@ app.post("/tasks", async (req, res) => {
     }
 });
 
-
 // ======================================================
 // GET TASKS
 // ======================================================
@@ -415,7 +408,6 @@ app.get(
         }
     }
 );
-
 
 // ======================================================
 // UPDATE TASK
@@ -503,7 +495,6 @@ app.patch(
     }
 );
 
-
 // ======================================================
 // DELETE TASK
 // ======================================================
@@ -553,7 +544,6 @@ app.delete(
     }
 );
 
-
 // ======================================================
 // GROQ AI CLASSIFICATION + SLOGAN
 // ======================================================
@@ -567,7 +557,6 @@ app.post(
                 req.body.task || ""
             ).trim();
 
-
         if (!task) {
 
             return res.status(400).json({
@@ -577,7 +566,6 @@ app.post(
 
             });
         }
-
 
         try {
 
@@ -590,7 +578,6 @@ app.post(
                 "Using Groq model:",
                 GROQ_MODEL
             );
-
 
             const completion =
                 await client.chat.completions.create({
@@ -699,7 +686,6 @@ Return:
 
                 });
 
-
             const text =
                 completion
                     .choices?.[0]
@@ -707,12 +693,10 @@ Return:
                     ?.content
                     ?.trim();
 
-
             console.log(
                 "Groq Raw Response:",
                 text
             );
-
 
             if (!text) {
 
@@ -724,9 +708,7 @@ Return:
                 });
             }
 
-
             let result;
-
 
             try {
 
@@ -750,7 +732,6 @@ Return:
                 });
             }
 
-
             const type =
                 String(
                     result.type || ""
@@ -758,13 +739,11 @@ Return:
                 .trim()
                 .toLowerCase();
 
-
             const quote =
                 String(
                     result.quote || ""
                 )
                 .trim();
-
 
             if (
                 type !== "good" &&
@@ -779,7 +758,6 @@ Return:
                 });
             }
 
-
             if (!quote) {
 
                 return res.status(500).json({
@@ -790,7 +768,6 @@ Return:
                 });
             }
 
-
             console.log(
                 "AI RESULT:",
                 {
@@ -800,7 +777,6 @@ Return:
                 }
             );
 
-
             res.json({
 
                 type,
@@ -809,14 +785,12 @@ Return:
 
             });
 
-
         } catch (err) {
 
             console.error(
                 "Groq Error:",
                 err
             );
-
 
             res.status(500).json({
 
@@ -834,7 +808,6 @@ Return:
     }
 );
 
-
 // ======================================================
 // START SERVER
 // ======================================================
@@ -843,13 +816,18 @@ async function startServer() {
 
     await selectGroqModel();
 
+    // Render provides PORT automatically.
+    // Locally, use port 4000.
+    const PORT =
+        process.env.PORT || 4000;
 
     app.listen(
-        4000,
+        PORT,
+        "0.0.0.0",
         () => {
 
             console.log(
-                "Groq AI Server running on port 4000"
+                `Groq AI Server running on port ${PORT}`
             );
 
             console.log(
@@ -861,5 +839,13 @@ async function startServer() {
     );
 }
 
+startServer().catch((err) => {
 
-startServer();
+    console.error(
+        "Server startup error:",
+        err
+    );
+
+    process.exit(1);
+
+});
