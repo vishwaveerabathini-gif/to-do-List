@@ -1,533 +1,371 @@
-// ======================================================
-// CONSISTENCY TRACKER - SERVER
-// Express + MongoDB + Groq + Vercel
-// ======================================================
-
 import mongoose from "mongoose";
 import "dotenv/config";
 import express from "express";
+import bodyParser from "body-parser";
 import cors from "cors";
 import Groq from "groq-sdk";
-import bcrypt from "bcryptjs";
-import path from "path";
-import { fileURLToPath } from "url";
-
-import User from "./user.js";
+import User from "./User.js";
 import Task from "./Task.js";
-
-// ======================================================
-// PATH CONFIGURATION
-// ======================================================
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// ======================================================
-// APP
-// ======================================================
+import bcrypt from "bcryptjs";
 
 const app = express();
 
-// ======================================================
-// MIDDLEWARE
-// ======================================================
-
 app.use(cors());
-
-app.use(express.json());
-
-app.use(express.urlencoded({ extended: true }));
-
-// Serve ALL frontend files from project root
-app.use(express.static(__dirname));
-
-// ======================================================
-// ENVIRONMENT VARIABLES
-// ======================================================
-
-const MONGODB_URI = process.env.MONGODB_URI;
-
-const GROQ_API_KEY = process.env.GROQ_API_KEY;
-
-// ======================================================
-// ENVIRONMENT LOGGING
-// ======================================================
-
-console.log(
-    "MongoDB URI loaded:",
-    MONGODB_URI ? "YES" : "NO"
-);
-
-console.log(
-    "Groq API key loaded:",
-    GROQ_API_KEY ? "YES" : "NO"
-);
-
-console.log(
-    "Groq API key length:",
-    GROQ_API_KEY?.length || 0
-);
+app.use(bodyParser.json());
 
 // ======================================================
 // MONGODB CONNECTION
 // ======================================================
 
-let mongoConnectionPromise = null;
-
-async function connectMongoDB() {
-
-    if (!MONGODB_URI) {
-        throw new Error(
-            "MONGODB_URI environment variable is missing."
-        );
-    }
-
-    // Already connected
-    if (mongoose.connection.readyState === 1) {
-        return;
-    }
-
-    // Connection already in progress
-    if (mongoConnectionPromise) {
-        await mongoConnectionPromise;
-        return;
-    }
-
-    mongoConnectionPromise = mongoose.connect(
-        MONGODB_URI,
-        {
-            serverSelectionTimeoutMS: 10000
-        }
-    );
-
-    try {
-
-        await mongoConnectionPromise;
-
-        console.log(
-            "MongoDB Connected Successfully"
-        );
-
-    } catch (error) {
-
+mongoose.connect(process.env.MONGODB_URI)
+    .then(() => {
+        console.log("MongoDB Connected Successfully");
+    })
+    .catch((err) => {
         console.error(
             "MongoDB Connection Error:",
-            error.message
+            err
         );
-
-        mongoConnectionPromise = null;
-
-        throw error;
-    }
-}
+    });
 
 // ======================================================
 // GROQ AI
 // ======================================================
 
-const client = GROQ_API_KEY
-    ? new Groq({
-        apiKey: GROQ_API_KEY
-    })
-    : null;
+const client = new Groq({
+    apiKey: process.env.GROQ_API_KEY
+});
 
-const GROQ_MODEL = "openai/gpt-oss-20b";
+let GROQ_MODEL = "openai/gpt-oss-20b";
 
 console.log(
-    "Active Groq model:",
-    GROQ_MODEL
+    "Groq API key loaded:",
+    process.env.GROQ_API_KEY
+        ? "YES"
+        : "NO"
+);
+
+console.log(
+    "Groq API key length:",
+    process.env.GROQ_API_KEY?.length || 0
 );
 
 // ======================================================
-// FRONTEND ROOT
+// FIND AVAILABLE GROQ MODEL
 // ======================================================
 
-// IMPORTANT:
-// Do NOT return API JSON from "/".
-// The website must open index.html.
+async function selectGroqModel() {
 
-app.get("/", (req, res) => {
-
-    res.sendFile(
-        path.join(__dirname, "index.html")
-    );
-
-});
-
-// ======================================================
-// HEALTH CHECK
-// ======================================================
-
-// API health information is now available here:
-// /api/health
-
-app.get("/api/health", async (req, res) => {
-
-    let mongodb = false;
+    const preferredModels = [
+        "openai/gpt-oss-20b",
+        "openai/gpt-oss-120b",
+        "llama-3.3-70b-versatile",
+        "llama-3.1-8b-instant"
+    ];
 
     try {
 
-        if (MONGODB_URI) {
-            await connectMongoDB();
-            mongodb =
-                mongoose.connection.readyState === 1;
+        const models =
+            await client.models.list();
+
+        const available =
+            new Set(
+                models.data.map(
+                    model => model.id
+                )
+            );
+
+        const selected =
+            preferredModels.find(
+                model =>
+                    available.has(model)
+            );
+
+        if (selected) {
+
+            GROQ_MODEL =
+                selected;
+
+            console.log(
+                "Groq model selected:",
+                GROQ_MODEL
+            );
+
+        } else {
+
+            console.error(
+                "No preferred Groq model is available."
+            );
+
+            console.log(
+                "Available models:",
+                models.data.map(
+                    model => model.id
+                )
+            );
         }
 
-    } catch (error) {
-
-        mongodb = false;
+    } catch (err) {
 
         console.error(
-            "Health MongoDB check:",
-            error.message
+            "Could not list Groq models:",
+            err.message
+        );
+
+        console.log(
+            "Using default model:",
+            GROQ_MODEL
         );
     }
-
-    res.json({
-        success: true,
-        message: "Consistency Tracker API is running",
-        groq: !!GROQ_API_KEY,
-        mongodb
-    });
-
-});
+}
 
 // ======================================================
 // SIGNUP
 // ======================================================
 
-app.post(
-    "/signup",
-    async (req, res) => {
+app.post("/signup", async (req, res) => {
 
-        try {
+    try {
 
-            await connectMongoDB();
+        const {
+            email,
+            password
+        } = req.body;
 
-            const {
-                email,
-                password
-            } = req.body;
+        if (!email || !password) {
 
-            // Validate input
-
-            if (!email || !password) {
-
-                return res
-                    .status(400)
-                    .json({
-                        error:
-                            "Email and password are required"
-                    });
-
-            }
-
-            const cleanEmail =
-                String(email)
-                    .trim()
-                    .toLowerCase();
-
-            // Password validation
-
-            if (password.length < 6) {
-
-                return res
-                    .status(400)
-                    .json({
-                        error:
-                            "Password must contain at least 6 characters"
-                    });
-
-            }
-
-            // Check existing user
-
-            const existingUser =
-                await User.findOne({
-                    email: cleanEmail
-                });
-
-            if (existingUser) {
-
-                return res
-                    .status(400)
-                    .json({
-                        error:
-                            "User already exists"
-                    });
-
-            }
-
-            // Hash password
-
-            const hashedPassword =
-                await bcrypt.hash(
-                    password,
-                    10
-                );
-
-            // Create user
-
-            const user =
-                await User.create({
-
-                    email:
-                        cleanEmail,
-
-                    password:
-                        hashedPassword
-
-                });
-
-            return res
-                .status(201)
-                .json({
-
-                    message:
-                        "Account created successfully",
-
-                    user: {
-
-                        id:
-                            user._id,
-
-                        email:
-                            user.email
-
-                    }
-
-                });
-
+            return res.status(400).json({
+                error:
+                    "Email and password are required"
+            });
         }
 
-        catch (err) {
+        const existingUser =
+            await User.findOne({
+                email
+            });
 
-            console.error(
-                "Signup Error:",
-                err
+        if (existingUser) {
+
+            return res.status(400).json({
+                error:
+                    "User already exists"
+            });
+        }
+
+        const hashedPassword =
+            await bcrypt.hash(
+                password,
+                10
             );
 
-            return res
-                .status(500)
-                .json({
-                    error:
-                        "Server error during signup"
-                });
+        const user =
+            await User.create({
 
-        }
+                email,
 
+                password:
+                    hashedPassword
+
+            });
+
+        res.status(201).json({
+
+            message:
+                "Account created successfully",
+
+            user: {
+
+                id:
+                    user._id,
+
+                email:
+                    user.email
+
+            }
+
+        });
+
+    } catch (err) {
+
+        console.error(
+            "Signup Error:",
+            err
+        );
+
+        res.status(500).json({
+
+            error:
+                "Server error during signup"
+
+        });
     }
-);
+});
 
 // ======================================================
 // LOGIN
 // ======================================================
 
-app.post(
-    "/login",
-    async (req, res) => {
+app.post("/login", async (req, res) => {
 
-        try {
+    try {
 
-            await connectMongoDB();
+        const {
+            email,
+            password
+        } = req.body;
 
-            const {
-                email,
-                password
-            } = req.body;
+        if (!email || !password) {
 
-            if (!email || !password) {
+            return res.status(400).json({
 
-                return res
-                    .status(400)
-                    .json({
-                        error:
-                            "Email and password are required"
-                    });
-
-            }
-
-            const cleanEmail =
-                String(email)
-                    .trim()
-                    .toLowerCase();
-
-            const user =
-                await User.findOne({
-                    email: cleanEmail
-                });
-
-            if (!user) {
-
-                return res
-                    .status(401)
-                    .json({
-                        error:
-                            "Invalid email or password"
-                    });
-
-            }
-
-            const passwordMatch =
-                await bcrypt.compare(
-                    password,
-                    user.password
-                );
-
-            if (!passwordMatch) {
-
-                return res
-                    .status(401)
-                    .json({
-                        error:
-                            "Invalid email or password"
-                    });
-
-            }
-
-            return res.json({
-
-                message:
-                    "Login successful",
-
-                user: {
-
-                    id:
-                        user._id,
-
-                    email:
-                        user.email
-
-                }
+                error:
+                    "Email and password are required"
 
             });
-
         }
 
-        catch (err) {
+        const user =
+            await User.findOne({
+                email
+            });
 
-            console.error(
-                "Login Error:",
-                err
+        if (!user) {
+
+            return res.status(401).json({
+
+                error:
+                    "Invalid email or password"
+
+            });
+        }
+
+        const passwordMatch =
+            await bcrypt.compare(
+                password,
+                user.password
             );
 
-            return res
-                .status(500)
-                .json({
-                    error:
-                        "Server error during login"
-                });
+        if (!passwordMatch) {
 
+            return res.status(401).json({
+
+                error:
+                    "Invalid email or password"
+
+            });
         }
 
+        res.json({
+
+            message:
+                "Login successful",
+
+            user: {
+
+                id:
+                    user._id,
+
+                email:
+                    user.email
+
+            }
+
+        });
+
+    } catch (err) {
+
+        console.error(
+            "Login Error:",
+            err
+        );
+
+        res.status(500).json({
+
+            error:
+                "Server error during login"
+
+        });
     }
-);
+});
 
 // ======================================================
 // CREATE TASK
 // ======================================================
 
-app.post(
-    "/tasks",
-    async (req, res) => {
+app.post("/tasks", async (req, res) => {
 
-        try {
+    try {
 
-            await connectMongoDB();
+        const {
+            title,
+            date,
+            userId
+        } = req.body;
 
-            const {
-                title,
-                date,
-                userId
-            } = req.body;
+        if (
+            !title ||
+            !date ||
+            !userId
+        ) {
 
-            if (
-                !title ||
-                !date ||
-                !userId
-            ) {
+            return res.status(400).json({
 
-                return res
-                    .status(400)
-                    .json({
-                        error:
-                            "Title, date and userId are required"
-                    });
+                error:
+                    "Title, date and userId are required"
 
-            }
-
-            const user =
-                await User.findById(
-                    userId
-                );
-
-            if (!user) {
-
-                return res
-                    .status(404)
-                    .json({
-                        error:
-                            "User not found"
-                    });
-
-            }
-
-            const cleanTitle =
-                String(title)
-                    .trim();
-
-            if (!cleanTitle) {
-
-                return res
-                    .status(400)
-                    .json({
-                        error:
-                            "Task title cannot be empty"
-                    });
-
-            }
-
-            const task =
-                await Task.create({
-
-                    title:
-                        cleanTitle,
-
-                    date:
-                        date,
-
-                    userId:
-                        userId,
-
-                    completed:
-                        false
-
-                });
-
-            return res
-                .status(201)
-                .json(task);
-
+            });
         }
 
-        catch (err) {
-
-            console.error(
-                "Create Task Error:",
-                err
+        const user =
+            await User.findById(
+                userId
             );
 
-            return res
-                .status(500)
-                .json({
-                    error:
-                        "Server error while creating task"
-                });
+        if (!user) {
 
+            return res.status(404).json({
+
+                error:
+                    "User not found"
+
+            });
         }
 
+        const task =
+            await Task.create({
+
+                title:
+                    title.trim(),
+
+                date,
+
+                userId,
+
+                completed:
+                    false
+
+            });
+
+        res.status(201).json(
+            task
+        );
+
+    } catch (err) {
+
+        console.error(
+            "Create Task Error:",
+            err
+        );
+
+        res.status(500).json({
+
+            error:
+                "Server error while creating task"
+
+        });
     }
-);
+});
 
 // ======================================================
 // GET TASKS
@@ -538,8 +376,6 @@ app.get(
     async (req, res) => {
 
         try {
-
-            await connectMongoDB();
 
             const tasks =
                 await Task.find({
@@ -552,28 +388,24 @@ app.get(
                     createdAt: -1
                 });
 
-            return res.json(
+            res.json(
                 tasks
             );
 
-        }
-
-        catch (err) {
+        } catch (err) {
 
             console.error(
                 "Get Tasks Error:",
                 err
             );
 
-            return res
-                .status(500)
-                .json({
-                    error:
-                        "Server error while fetching tasks"
-                });
+            res.status(500).json({
 
+                error:
+                    "Server error while fetching tasks"
+
+            });
         }
-
     }
 );
 
@@ -587,8 +419,6 @@ app.patch(
 
         try {
 
-            await connectMongoDB();
-
             const updateData = {};
 
             if (
@@ -597,9 +427,7 @@ app.patch(
             ) {
 
                 updateData.completed =
-                    Boolean(
-                        req.body.completed
-                    );
+                    req.body.completed;
 
             }
 
@@ -609,9 +437,7 @@ app.patch(
             ) {
 
                 updateData.title =
-                    String(
-                        req.body.title
-                    ).trim();
+                    req.body.title;
 
             }
 
@@ -633,45 +459,39 @@ app.patch(
                     updateData,
 
                     {
-                        new: true,
-                        runValidators: true
+                        new: true
                     }
 
                 );
 
             if (!task) {
 
-                return res
-                    .status(404)
-                    .json({
-                        error:
-                            "Task not found"
-                    });
+                return res.status(404).json({
 
+                    error:
+                        "Task not found"
+
+                });
             }
 
-            return res.json(
+            res.json(
                 task
             );
 
-        }
-
-        catch (err) {
+        } catch (err) {
 
             console.error(
                 "Update Task Error:",
                 err
             );
 
-            return res
-                .status(500)
-                .json({
-                    error:
-                        "Server error while updating task"
-                });
+            res.status(500).json({
 
+                error:
+                    "Server error while updating task"
+
+            });
         }
-
     }
 );
 
@@ -685,8 +505,6 @@ app.delete(
 
         try {
 
-            await connectMongoDB();
-
             const task =
                 await Task.findByIdAndDelete(
                     req.params.id
@@ -694,40 +512,35 @@ app.delete(
 
             if (!task) {
 
-                return res
-                    .status(404)
-                    .json({
-                        error:
-                            "Task not found"
-                    });
+                return res.status(404).json({
 
+                    error:
+                        "Task not found"
+
+                });
             }
 
-            return res.json({
+            res.json({
 
                 message:
                     "Task deleted successfully"
 
             });
 
-        }
-
-        catch (err) {
+        } catch (err) {
 
             console.error(
                 "Delete Task Error:",
                 err
             );
 
-            return res
-                .status(500)
-                .json({
-                    error:
-                        "Server error while deleting task"
-                });
+            res.status(500).json({
 
+                error:
+                    "Server error while deleting task"
+
+            });
         }
-
     }
 );
 
@@ -746,24 +559,12 @@ app.post(
 
         if (!task) {
 
-            return res
-                .status(400)
-                .json({
-                    error:
-                        "Task is required"
-                });
+            return res.status(400).json({
 
-        }
+                error:
+                    "Task is required"
 
-        if (!client) {
-
-            return res
-                .status(500)
-                .json({
-                    error:
-                        "GROQ_API_KEY is not configured"
-                });
-
+            });
         }
 
         try {
@@ -773,30 +574,33 @@ app.post(
                 task
             );
 
+            console.log(
+                "Using Groq model:",
+                GROQ_MODEL
+            );
+
             const completion =
-                await client
-                    .chat
-                    .completions
-                    .create({
+                await client.chat.completions.create({
 
-                        model:
-                            GROQ_MODEL,
+                    model:
+                        GROQ_MODEL,
 
-                        temperature:
-                            0.9,
+                    temperature:
+                        0.9,
 
-                        response_format: {
-                            type:
-                                "json_object"
-                        },
+                    response_format: {
+                        type:
+                            "json_object"
+                    },
 
-                        messages: [
+                    messages: [
 
-                            {
-                                role:
-                                    "system",
+                        {
 
-                                content: `
+                            role:
+                                "system",
+
+                            content: `
 
 You are a smart habit and lifestyle coach.
 
@@ -841,29 +645,31 @@ IMPORTANT:
 - Do not use markdown.
 - Do not add explanations outside JSON.
 
-Return exactly:
+Example GOOD:
 
 {
   "type": "good",
-  "quote": "short slogan"
+  "quote": "Staying hydrated keeps your body energized and your mind refreshed. Keep drinking water!"
 }
 
-or
+Example BAD:
 
 {
   "type": "bad",
-  "quote": "short warning slogan"
+  "quote": "Alcohol can harm your health over time. Choose habits that protect your body and future."
 }
 
 `
-                            },
 
-                            {
-                                role:
-                                    "user",
+                        },
 
-                                content:
-                                    `Analyze this exact task:
+                        {
+
+                            role:
+                                "user",
+
+                            content:
+                                `Analyze this exact task:
 
 "${task}"
 
@@ -873,11 +679,12 @@ for this task.
 Return:
 
 {"type":"good|bad","quote":"unique slogan"}`
-                            }
 
-                        ]
+                        }
 
-                    });
+                    ]
+
+                });
 
             const text =
                 completion
@@ -893,13 +700,12 @@ Return:
 
             if (!text) {
 
-                return res
-                    .status(500)
-                    .json({
-                        error:
-                            "Groq returned an empty response"
-                    });
+                return res.status(500).json({
 
+                    error:
+                        "Groq returned an empty response"
+
+                });
             }
 
             let result;
@@ -907,62 +713,59 @@ Return:
             try {
 
                 result =
-                    JSON.parse(text);
+                    JSON.parse(
+                        text
+                    );
 
-            }
-
-            catch (parseError) {
+            } catch (parseError) {
 
                 console.error(
                     "Groq JSON Parse Error:",
                     parseError
                 );
 
-                return res
-                    .status(500)
-                    .json({
-                        error:
-                            "Groq returned invalid JSON"
-                    });
+                return res.status(500).json({
 
+                    error:
+                        "Groq returned invalid JSON"
+
+                });
             }
 
             const type =
                 String(
                     result.type || ""
                 )
-                    .trim()
-                    .toLowerCase();
+                .trim()
+                .toLowerCase();
 
             const quote =
                 String(
                     result.quote || ""
                 )
-                    .trim();
+                .trim();
 
             if (
                 type !== "good" &&
                 type !== "bad"
             ) {
 
-                return res
-                    .status(500)
-                    .json({
-                        error:
-                            "Invalid task classification"
-                    });
+                return res.status(500).json({
 
+                    error:
+                        "Invalid task classification"
+
+                });
             }
 
             if (!quote) {
 
-                return res
-                    .status(500)
-                    .json({
-                        error:
-                            "Groq did not generate a slogan"
-                    });
+                return res.status(500).json({
 
+                    error:
+                        "Groq did not generate a slogan"
+
+                });
             }
 
             console.log(
@@ -974,96 +777,69 @@ Return:
                 }
             );
 
-            return res.json({
+            res.json({
 
                 type,
+
                 quote
 
             });
 
-        }
-
-        catch (err) {
+        } catch (err) {
 
             console.error(
                 "Groq Error:",
                 err
             );
 
-            return res
-                .status(500)
-                .json({
+            res.status(500).json({
 
-                    error:
-                        "Groq server error",
+                error:
+                    "Groq server error",
 
-                    details:
-                        err?.error?.message ||
-                        err?.message ||
-                        "Unknown Groq error"
+                details:
+                    err?.error?.message ||
+                    err?.message ||
+                    "Unknown Groq error"
 
-                });
-
+            });
         }
 
     }
 );
 
 // ======================================================
-// 404 API HANDLER
+// START SERVER
 // ======================================================
 
-app.use(
-    "/api",
-    (req, res) => {
-
-        res
-            .status(404)
-            .json({
-                error:
-                    "API route not found"
-            });
-
-    }
-);
-
 // ======================================================
-// ERROR HANDLER
+// START SERVER
 // ======================================================
 
-app.use(
-    (err, req, res, next) => {
+const PORT = process.env.PORT || 4000;
 
-        console.error(
-            "Unhandled Server Error:",
-            err
+app.listen(
+    PORT,
+    "0.0.0.0",
+    () => {
+
+        console.log(
+            `Groq AI Server running on port ${PORT}`
         );
 
-        res
-            .status(500)
-            .json({
-                error:
-                    "Internal server error"
+        // Select Groq model after server starts
+        selectGroqModel()
+            .then(() => {
+                console.log(
+                    "Active Groq model:",
+                    GROQ_MODEL
+                );
+            })
+            .catch((err) => {
+                console.error(
+                    "Groq model selection error:",
+                    err
+                );
             });
-
     }
 );
-
-// ======================================================
-// VERCEL EXPORT
-// ======================================================
-
-export default app;
-
-// ======================================================
-// LOCAL DEVELOPMENT
-// ======================================================
-
-// Vercel does not need app.listen().
-// For local development use:
-// npm start
-//
-// If your package.json already runs:
-// node server.js
-//
-// Keep this file as the Vercel serverless entry point.
