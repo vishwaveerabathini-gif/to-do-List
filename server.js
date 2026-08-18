@@ -812,40 +812,34 @@ Return:
 // START SERVER
 // ======================================================
 
-async function startServer() {
+// ======================================================
+// START SERVER
+// ======================================================
 
-    await selectGroqModel();
+const PORT = process.env.PORT || 4000;
 
-    // Render provides PORT automatically.
-    // Locally, use port 4000.
-    const PORT =
-        process.env.PORT || 4000;
+app.listen(
+    PORT,
+    "0.0.0.0",
+    () => {
 
-    app.listen(
-        PORT,
-        "0.0.0.0",
-        () => {
+        console.log(
+            `Groq AI Server running on port ${PORT}`
+        );
 
-            console.log(
-                `Groq AI Server running on port ${PORT}`
-            );
-
-            console.log(
-                "Active Groq model:",
-                GROQ_MODEL
-            );
-
-        }
-    );
-}
-
-startServer().catch((err) => {
-
-    console.error(
-        "Server startup error:",
-        err
-    );
-
-    process.exit(1);
-
-});
+        // Select Groq model after server starts
+        selectGroqModel()
+            .then(() => {
+                console.log(
+                    "Active Groq model:",
+                    GROQ_MODEL
+                );
+            })
+            .catch((err) => {
+                console.error(
+                    "Groq model selection error:",
+                    err
+                );
+            });
+    }
+);
